@@ -13,7 +13,7 @@
           <svg-icon icon-class="user" />
         </span>
         <el-input
-          ref="mobile"
+          ref="username"
           v-model="loginForm.mobile"
           placeholder="请输入手机号"
           type="text"
@@ -42,7 +42,13 @@
         </span>
       </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin" class="loginBtn">登录</el-button>
+      <el-button
+        class="loginBtn"
+        :loading="loading"
+        type="primary"
+        style="width:100%;margin-bottom:30px;"
+        @click.native.prevent="handleLogin"
+      >登录</el-button>
 
       <div class="tips">
         <span style="margin-right:20px;">账号: 13800000002</span>
@@ -55,10 +61,10 @@
 
 <script>
 import { validMobile } from '@/utils/validate'
-
+import { mapActions } from 'vuex'
 export default {
   name: 'Login',
-   data() {
+  data() {
     // 自定义校验函数
     const validateMobile = function(rule, value, callback) {
       // 校验value
@@ -78,7 +84,8 @@ export default {
       },
       loginRules: {
         mobile: [{ required: true, trigger: 'blur', message: '手机号不能为空' }, {
-          validator: validateMobile, trigger: 'blur'
+          validator: validateMobile, 
+          trigger: 'blur'
         }],
         password: [{ required: true, trigger: 'blur', message: '密码不能为空' }, {
           min: 6, max: 16, message: '密码的长度在6-16位之间 ', trigger: 'blur'
@@ -98,6 +105,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['user/login']),
     showPwd() {
       if (this.passwordType === 'password') {
         this.passwordType = ''
@@ -108,19 +116,22 @@ export default {
         this.$refs.password.focus()
       })
     },
+    // 登录
     handleLogin() {
-      this.$refs.loginForm.validate(valid => {
-        if (valid) {
+      this.$refs.loginForm.validate(async isOK => {
+        if (isOK) {
+          // 表示校验通过
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
+          try {
+            await this['user/login'](this.loginForm)
+            // 只要进行到这个位置 说明登录成功了 跳到主页
+            this.$router.push('/')
+          } catch (error) {
+            //
+          } finally {
+            // finally是和trycatch配套的 不论你执行不执行catch都会执行finally
             this.loading = false
-          }).catch(() => {
-            this.loading = false
-          })
-        } else {
-          console.log('error submit!!')
-          return false
+          }
         }
       })
     }
@@ -133,8 +144,8 @@ export default {
 /* Detail see https://github.com/PanJiaChen/vue-element-admin/pull/927 */
 
 $bg:#283443;
-$cursor: #fff;
 $light_gray: #68b0fe;
+$cursor: #fff;
 
 @supports (-webkit-mask: none) and (not (cater-color: $cursor)) {
   .login-container .el-input input {
@@ -144,6 +155,8 @@ $light_gray: #68b0fe;
 
 /* reset element-ui css */
 .login-container {
+  background-image: url('~@/assets/common/login.jpg');
+  background-position: center;
   .el-input {
     display: inline-block;
     height: 47px;
@@ -172,17 +185,16 @@ $light_gray: #68b0fe;
     border-radius: 5px;
     color: #454545;
   }
-  // 设置错误信息的颜色
   .el-form-item__error {
-  color: #fff
+    color: #fff
   }
-  //设置登录按钮的样式
   .loginBtn {
-  background: #407ffe;
-  height: 64px;
-  line-height: 32px;
-  font-size: 24px;
-  }
+    background: #407ffe;
+    height: 64px;
+    line-height: 32px;
+    font-size: 24px;
+ }
+
 }
 </style>
 
@@ -194,9 +206,9 @@ $light_gray:#eee;
 .login-container {
   min-height: 100%;
   width: 100%;
+  background-color: $bg;
   overflow: hidden;
-  background: url(~@/assets/common/login.jpg);
-  background-size: 100% 100%;
+
   .login-form {
     position: relative;
     width: 520px;
