@@ -4,7 +4,6 @@ const service =axios.create({
     baseURL:process.env.VUE_APP_BASE_API,
     timeout:5000,// 超时时间
 })
-service.interceptors.request.use()
 // 响应拦截器
 service.interceptors.response.use(response => {
     // axios默认加了一层data
